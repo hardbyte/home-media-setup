@@ -1,0 +1,34 @@
+[Unit]
+Description=Nginx Proxy Server
+
+After=transmission.service
+Requires=transmission.service
+
+# Proxy local requests to correct docker container
+# https://github.com/dperson/transmission
+
+[Service]
+Restart=always
+RestartSec=60
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker kill nginx
+ExecStartPre=-/usr/bin/docker rm nginx
+ExecStartPre=/usr/bin/docker pull dperson/nginx
+ExecStart=/usr/bin/docker run \
+    --name=nginx \
+    --rm \
+    -p 80:80 -p 443:443 \
+    --link vpn:transmission \
+    -e TZ="Australia/Sydney" \
+    -v /mnt/drive/server-configs/nginx:/srv/www \
+    dperson/nginx \
+    -w "http://transmission:9091/transmission;/transmission" \
+    -w "http://your-machine.local:8096/;/emby/" \
+    -w "http://your-machine.local:8081/;/sickrage/" \
+    -w "http://your-machine.local:8181;/headphones/"
+
+ExecStop=/usr/bin/docker stop -t 2 nginx
+
+[Install]
+WantedBy=multi-user.target

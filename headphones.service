@@ -1,0 +1,37 @@
+[Unit]
+Description=Headphones Server
+After=docker.service
+Requires=docker.service
+
+# Wait for Transmission
+After=transmission.service
+Requires=transmission.service
+
+
+[Service]
+
+# If the service fails, wait 60 seconds before trying again
+Restart=always
+RestartSec=60
+
+# Let processes take awhile to start up
+# TimeoutStartSec=0 to turn off timeouts, as the docker pull may take a while.
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker kill headphones
+ExecStartPre=-/usr/bin/docker rm headphones
+ExecStartPre=/usr/bin/docker pull needo/sickrage
+ExecStart=/usr/bin/docker run --rm \
+    --name="headphones" \
+    -p 8181:8181 \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /mnt/drive/server-configs/headphones:/config \
+    -v /mnt/drive/music-downloads:/music-downloads \
+    -v /mnt/drive/Music:/music \
+    --link vpn:transmission \
+    linuxserver/headphones
+
+ExecStop=/usr/bin/docker stop -t 2 headphones
+
+[Install]
+WantedBy=multi-user.target

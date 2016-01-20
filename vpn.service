@@ -1,0 +1,40 @@
+[Unit]
+Description=VPN Server
+After=docker.service
+Requires=docker.service
+
+# https://github.com/dperson/openvpn-client
+
+[Service]
+
+Restart=always
+
+# If the service fails, wait 60 seconds before trying again
+RestartSec=60
+
+# Let processes take awhile to start up
+# TimeoutStartSec=0 to turn off timeouts, as the docker pull may take a while.
+TimeoutStartSec=0
+
+
+# Pre-start and Start
+## Directives with "=-" are allowed to fail without consequence
+ExecStartPre=-/usr/bin/docker kill vpn
+ExecStartPre=-/usr/bin/docker rm vpn
+ExecStartPre=/usr/bin/docker pull dperson/openvpn-client
+ExecStart=/usr/bin/docker run --rm \
+    --name="vpn" \
+    --cap-add=NET_ADMIN \
+    --device /dev/net/tun \
+    --dns 8.8.4.4 --dns 8.8.8.8 \
+    -v /mnt/drive/server/vpn:/vpn \
+    dperson/openvpn-client \
+    -v "your-vpn.endpoind.com;username;password"
+
+# Note the required config format:
+# -v "vpn.server.name;username;password"
+
+ExecStop=/usr/bin/docker stop -t 2 vpn
+
+[Install]
+WantedBy=multi-user.target

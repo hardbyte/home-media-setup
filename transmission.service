@@ -1,0 +1,35 @@
+[Unit]
+Description=Transmission Server
+# https://github.com/dperson/transmission
+
+# Wait for vpn
+After=vpn.service
+Requires=vpn.service
+
+[Service]
+Restart=always
+RestartSec=60
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker kill transmission
+ExecStartPre=-/usr/bin/docker rm transmission
+ExecStartPre=/usr/bin/docker pull dperson/transmission
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --net=container:vpn \
+    -e TZ="Australia/Sydney" \
+    -e TRUSER="your-transmission-username" \
+    -e TRPASSWD="your-transmission-password" \
+    -e USERID="99" -e GROUPID="100" \
+    -v /mnt/drive/server-configs/transmission:/var/lib/transmission-daemon/info \
+    -v /mnt/drive/server-incomplete-downloads:/var/lib/transmission-daemon/incomplete \
+    -v /mnt/drive/Downloads:/var/lib/transmission-daemon/downloads \
+    -v /mnt/drive/music-downloads:/music-downloads \
+    --name=transmission \
+    dperson/transmission
+
+ExecStop=/usr/bin/docker stop -t 2 transmission
+
+[Install]
+WantedBy=multi-user.target
+

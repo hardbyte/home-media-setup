@@ -1,0 +1,32 @@
+[Unit]
+Description=Emby Server
+After=docker.service
+Requires=docker.service
+
+[Service]
+
+Restart=always
+RestartSec=60
+
+# Let processes take awhile to start up (for first run Docker containers)
+# TimeoutStartSec=0 to turn off timeouts, as the docker pull may take a while.
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker kill emby
+ExecStartPre=-/usr/bin/docker rm emby
+ExecStartPre=/usr/bin/docker pull emby/embyserver
+ExecStart=/usr/bin/docker run --net=host --rm \
+    -e TZ="Australia/Sydney" \
+    -v /mnt/drive/server-configs/emby:/config \
+    -v /mnt/drive/Movies:/media/Movies \
+    -v /mnt/drive/TV:/media/tv \
+    -v /mnt/drive/Music:/media/music \
+    --name=emby \
+    emby/embyserver
+
+
+ExecStop=/usr/bin/docker stop -t 2 emby
+
+
+[Install]
+WantedBy=multi-user.target

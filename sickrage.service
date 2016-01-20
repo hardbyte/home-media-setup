@@ -1,0 +1,29 @@
+[Unit]
+Description=Sickrage Server
+
+After=transmission.service
+Requires=transmission.service
+
+[Service]
+Restart=always
+RestartSec=60
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker kill sickrage
+ExecStartPre=-/usr/bin/docker rm sickrage
+ExecStartPre=/usr/bin/docker pull needo/sickrage
+ExecStart=/usr/bin/docker run --rm \
+    --name="sickrage" \
+    -p 8081:8081 \
+    -v /mnt/drive/server-configs/sickrage:/config \
+    -v /mnt/drive/Downloads:/downloads \
+    -v /mnt/drive/Video/tv:/tv \
+    -v /etc/localtime:/etc/localtime:ro \
+    --link vpn:transmission \
+    -e EDGE=1 \
+    needo/sickrage
+
+ExecStop=/usr/bin/docker stop -t 2 sickrage
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,35 @@
+[Unit]
+Description=Couch Potato Server
+After=docker.service
+Requires=docker.service
+
+# https://hub.docker.com/r/linuxserver/couchpotato/
+
+# Wait for Transmission
+After=transmission.service
+Requires=transmission.service
+
+[Service]
+
+Restart=always
+RestartSec=60
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker kill couchpotato
+ExecStartPre=-/usr/bin/docker rm couchpotato
+ExecStartPre=/usr/bin/docker pull emby/embyserver
+ExecStart=/usr/bin/docker run --rm \
+    -p 5050:5050 \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /mnt/drive/server-configs/couchpotato:/config \
+    -v /mnt/drive/Movies:/movies \
+    -v /mnt/drive/Downloads:/downloads \
+    -e PGID=100 -e PUID=99 \
+    --link vpn:transmission \
+    --name=couchpotato \
+    linuxserver/couchpotato
+
+ExecStop=/usr/bin/docker stop -t 2 couchpotato
+
+[Install]
+WantedBy=multi-user.target
