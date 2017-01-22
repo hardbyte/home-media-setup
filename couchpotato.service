@@ -17,7 +17,7 @@ TimeoutStartSec=0
 
 ExecStartPre=-/usr/bin/docker kill couchpotato
 ExecStartPre=-/usr/bin/docker rm couchpotato
-ExecStartPre=/usr/bin/docker pull emby/embyserver
+ExecStartPre=/usr/bin/docker pull linuxserver/couchpotato
 ExecStart=/usr/bin/docker run --rm \
     -p 5050:5050 \
     -v /etc/localtime:/etc/localtime:ro \
